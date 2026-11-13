@@ -2,8 +2,8 @@
 {
     public interface MathematicalElement<T>
     {
-        public double Evaluate(double x);
+        double Evaluate(double x);
 
-        public T Derivative();
+        T Derivative();
     }
 }

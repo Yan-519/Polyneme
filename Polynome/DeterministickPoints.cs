@@ -21,7 +21,7 @@
 
         public override string ToString()
         {
-            return $"({X}, {Y})-{Type}"; 
+            return $"({X}, {Y})-{Type}";
         }
     }
 }

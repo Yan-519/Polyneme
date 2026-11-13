@@ -30,7 +30,7 @@
 
         public override string ToString()
         {
-            if(Coefficient == 0)
+            if (Coefficient == 0)
                 return "0";
 
             string str = 0 < Coefficient ? $"{Coefficient}" : $"({Coefficient})";

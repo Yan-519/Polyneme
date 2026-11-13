@@ -2,10 +2,10 @@
 {
     public struct Poly() : MathematicalElement<Poly>
     {
-        public const double EPSILON = 1e-5;
+        private const double EPSILON = 1e-5;
+        private const int MAX_RESERCH_DISTANCE = 1000;
 
-
-        private List<Element> elements = [];
+        private readonly List<Element> elements = [];
 
         public Poly(List<Element> elements) : this()
         {
@@ -35,7 +35,6 @@
             return new Poly(derivativeElements);
         }
 
-        
 
         private List<double> SolSimple(int degree)
         {
@@ -49,17 +48,17 @@
                 double c = elements.FirstOrDefault(e => e.Exponent == 0).Coefficient;
                 double discriminant = b * b - 4 * a * c;
                 if (discriminant < 0)
-                    return new List<double>();
+                    return [];
                 double root1 = (-b + Math.Sqrt(discriminant)) / (2 * a);
                 double root2 = (-b - Math.Sqrt(discriminant)) / (2 * a);
-                return [ root1, root2 ];
+                return [root1, root2];
             }
             else if (degree == 1)
             {
                 double b = elements.FirstOrDefault(e => e.Exponent == 1).Coefficient;
                 double c = elements.FirstOrDefault(e => e.Exponent == 0).Coefficient;
                 double root = -c / b;
-                return [ root ];
+                return [root];
             }
 
             return [];
@@ -89,7 +88,7 @@
             }
             return points;
         }
-        
+
         private double FindRootBisection(double x1, double x2, bool isGoingUp)
         {
             double middleVal = Evaluate((x1 + x2) / 2);
@@ -115,8 +114,6 @@
 
         private double FindBootInDetraction(double x, bool isLeft)
         {
-            const int MAX_RESERCH_DISTANCE = 1000;
-
             int sign = isLeft ? -1 : 1;
 
             double beforeZero = x;
@@ -125,7 +122,7 @@
             {
                 double currentX = x + sign * (i + 1);
 
-                if(Evaluate(currentX) * Evaluate(x) < 0)
+                if (Evaluate(currentX) * Evaluate(x) < 0)
                 {
                     afterZero = currentX;
                     break;
@@ -154,7 +151,7 @@
 
             DeterministicPoint first = deterministicPoints.First();
 
-            if (first.Type == DeterministicPoint.DeterministicPointType.Maximal && 0 < first.Y || 
+            if (first.Type == DeterministicPoint.DeterministicPointType.Maximal && 0 < first.Y ||
                 first.Type == DeterministicPoint.DeterministicPointType.Minimal && first.Y < 0)
             {
                 results.Add(FindBootInDetraction(first.X, true));
