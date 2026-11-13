@@ -34,6 +34,7 @@
                 return "0";
 
             string str = 0 < Coefficient ? $"{Coefficient}" : $"({Coefficient})";
+            if (Coefficient == 1) str = string.Empty;
 
             if (Exponent == 0)
                 return str;

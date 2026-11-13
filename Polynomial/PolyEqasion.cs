@@ -116,7 +116,7 @@
             }
         }
 
-        private double FindBootInDetraction(double x, bool isLeft)
+        private double FindRootInDetraction(double x, bool isLeft)
         {
             int sign = isLeft ? -1 : 1;
             double y = Evaluate(x);
@@ -149,13 +149,7 @@
         {
             List<Element> newElements = [];
             foreach (var element in elements)
-            {
-                if(element.Exponent < minExponent) throw new InvalidOperationException("Cannot normalize polynomial with negative exponents.");
-
-
                 newElements.Add(new Element(element.Coefficient, element.Exponent - minExponent));
-
-            }
 
             return new PolyEquation(newElements);
         }
@@ -168,7 +162,7 @@
 
 
             int minExponent = elements.Min(e => e.Exponent);
-            if (1 < minExponent)
+            if (0 < minExponent)
             {
                 HashSet<double> normalizedRoots = Normalize(minExponent).Sol();
                 normalizedRoots.Add(0);
@@ -178,17 +172,29 @@
 
             HashSet<double> results = [];
 
+            PolyEquation derivativePoly = Derivative();
+
             List<DeterministicPoint> deterministicPoints = GetDeterministicPoints().OrderBy(p => p.X).ToList();
 
-            if (deterministicPoints.Count == 0) return [];
+            if (deterministicPoints.Count == 0)
+            {
+                if (Evaluate(0) == 0)
+                    results.Add(0);
+                else if (0 < Evaluate(0))
+                        results.Add(FindRootInDetraction(0, 0 < derivativePoly.Evaluate(0)));
+                
+                else
+                    results.Add(FindRootInDetraction(0, 0 > derivativePoly.Evaluate(0)));
 
-            PolyEquation derivativePoly = Derivative();
+                return results;
+            }
+
 
             DeterministicPoint first = deterministicPoints.First();
 
             if (derivativePoly.Evaluate(first.X - 0.1) * first.Y > 0)
             {
-                double res = FindBootInDetraction(first.X, true);
+                double res = FindRootInDetraction(first.X, true);
                 if (!double.IsNaN(res))
                     results.Add(res);
             }
@@ -213,9 +219,12 @@
 
             DeterministicPoint last = deterministicPoints.Last();
 
+            if (last.Y == 0)
+                results.Add(last.X);
+
             if (derivativePoly.Evaluate(last.X + 0.1) * last.Y < 0)
             {
-                double res = FindBootInDetraction(last.X, false);
+                double res = FindRootInDetraction(last.X, false);
                 if (!double.IsNaN(res))
                     results.Add(res);
             }
