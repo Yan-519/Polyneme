@@ -1,15 +1,29 @@
-﻿namespace Polyneme
+﻿namespace Polynomial
 {
-    public struct PolyEquasion() : MathematicalElement<PolyEquasion>
+    public struct PolyEquation() : IMathematicalElement<PolyEquation>
     {
         private const double EPSILON = 1e-5;
-        private const int MAX_RESERCH_DISTANCE = 1000;
+        private const int MAX_RESEARCH_DISTANCE = 1000;
 
         private readonly List<Element> elements = [];
 
-        public PolyEquasion(List<Element> elements) : this()
+        public PolyEquation(List<Element> elements) : this()
         {
-            this.elements = elements;
+            Dictionary<int, double> exponentToCoefficient = new();
+
+            foreach (var element in elements)
+            {
+                if (exponentToCoefficient.ContainsKey(element.Exponent))
+                    exponentToCoefficient[element.Exponent] += element.Coefficient;
+                else
+                    exponentToCoefficient[element.Exponent] = element.Coefficient;
+            }
+
+            this.elements = exponentToCoefficient
+                .Where(kvp => kvp.Value != 0)
+                .Select(kvp => new Element(kvp.Value, kvp.Key))
+                .OrderByDescending(e => e.Exponent)
+                .ToList();
         }
 
         public double Evaluate(double x)
@@ -23,20 +37,20 @@
         }
 
 
-        public PolyEquasion Derivative()
+        public PolyEquation Derivative()
         {
-            List<Element> derivativeElements = new List<Element>();
+            List<Element> derivativeElements = [];
             foreach (var element in elements)
             {
                 Element derivativeElement = element.Derivative();
                 if (derivativeElement.Coefficient != 0)
                     derivativeElements.Add(derivativeElement);
             }
-            return new PolyEquasion(derivativeElements);
+            return new PolyEquation(derivativeElements);
         }
 
 
-        private List<double> SolSimple(int degree)
+        private HashSet<double> SolSimple(int degree)
         {
             if (2 < degree)
                 throw new ArgumentException("Degree must be 2 or less for this method.");
@@ -66,26 +80,16 @@
 
         private List<DeterministicPoint> GetDeterministicPoints()
         {
-            List<DeterministicPoint> points = new List<DeterministicPoint>();
+            List<DeterministicPoint> points = [];
 
-            PolyEquasion derivativePoly = Derivative();
-            PolyEquasion secondDerivativePoly = derivativePoly.Derivative();
+            PolyEquation derivativePoly = Derivative();
+            PolyEquation secondDerivativePoly = derivativePoly.Derivative();
 
-            List<double> criticalPoints = derivativePoly.Sol();
+            HashSet<double> criticalPoints = derivativePoly.Sol();
 
             foreach (double x in criticalPoints)
-            {
-                double y = Evaluate(x);
-
-                double secondDerivativeValue = secondDerivativePoly.Evaluate(x);
-                if (secondDerivativeValue == 0) continue;
-
-                DeterministicPoint.DeterministicPointType pointType = 0 < secondDerivativeValue ?
-                    DeterministicPoint.DeterministicPointType.Minimal : DeterministicPoint.DeterministicPointType.Maximal;
-
-
-                points.Add(new DeterministicPoint(pointType, x, y));
-            }
+                points.Add(new DeterministicPoint(x, Evaluate(x), secondDerivativePoly.Evaluate(x)));
+            
             return points;
         }
 
@@ -115,14 +119,15 @@
         private double FindBootInDetraction(double x, bool isLeft)
         {
             int sign = isLeft ? -1 : 1;
+            double y = Evaluate(x);
 
             double beforeZero = x;
             double afterZero = x;
-            for (int i = 0; i < MAX_RESERCH_DISTANCE; i++)
+            for (int i = 0; i < MAX_RESEARCH_DISTANCE; i++)
             {
                 double currentX = x + sign * (i + 1);
 
-                if (Evaluate(currentX) * Evaluate(x) < 0)
+                if (Evaluate(currentX) * y < 0)
                 {
                     afterZero = currentX;
                     break;
@@ -131,30 +136,61 @@
                 beforeZero = currentX;
             }
 
+            if(afterZero == x) return double.NaN;
+
+
             double start = Math.Min(beforeZero, afterZero);
             double end = Math.Max(beforeZero, afterZero);
 
             return FindRootBisection(start, end, Evaluate(start) < Evaluate(end));
         }
 
-        public List<double> Sol()
+        private PolyEquation Normalize(int minExponent)
+        {
+            List<Element> newElements = [];
+            foreach (var element in elements)
+            {
+                if(element.Exponent < minExponent) throw new InvalidOperationException("Cannot normalize polynomial with negative exponents.");
+
+
+                newElements.Add(new Element(element.Coefficient, element.Exponent - minExponent));
+
+            }
+
+            return new PolyEquation(newElements);
+        }
+
+        public HashSet<double> Sol()
         {
             int degree = elements.Max(e => e.Exponent);
             if (degree <= 2)
                 return SolSimple(degree);
 
 
-            List<double> results = [];
+            int minExponent = elements.Min(e => e.Exponent);
+            if (1 < minExponent)
+            {
+                HashSet<double> normalizedRoots = Normalize(minExponent).Sol();
+                normalizedRoots.Add(0);
+                return normalizedRoots;
+            }
+
+
+            HashSet<double> results = [];
 
             List<DeterministicPoint> deterministicPoints = GetDeterministicPoints().OrderBy(p => p.X).ToList();
+
             if (deterministicPoints.Count == 0) return [];
+
+            PolyEquation derivativePoly = Derivative();
 
             DeterministicPoint first = deterministicPoints.First();
 
-            if (first.Type == DeterministicPoint.DeterministicPointType.Maximal && 0 < first.Y ||
-                first.Type == DeterministicPoint.DeterministicPointType.Minimal && first.Y < 0)
+            if (derivativePoly.Evaluate(first.X - 0.1) * first.Y > 0)
             {
-                results.Add(FindBootInDetraction(first.X, true));
+                double res = FindBootInDetraction(first.X, true);
+                if (!double.IsNaN(res))
+                    results.Add(res);
             }
 
             for (int i = 0; i < deterministicPoints.Count - 1; i++)
@@ -177,10 +213,11 @@
 
             DeterministicPoint last = deterministicPoints.Last();
 
-            if (last.Type == DeterministicPoint.DeterministicPointType.Maximal && 0 < last.Y ||
-                last.Type == DeterministicPoint.DeterministicPointType.Minimal && last.Y < 0)
+            if (derivativePoly.Evaluate(last.X + 0.1) * last.Y < 0)
             {
-                results.Add(FindBootInDetraction(last.X, false));
+                double res = FindBootInDetraction(last.X, false);
+                if (!double.IsNaN(res))
+                    results.Add(res);
             }
 
             return results;

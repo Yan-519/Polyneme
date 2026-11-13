@@ -1,6 +1,6 @@
-﻿namespace Polyneme
+﻿namespace Polynomial
 {
-    public struct Element : MathematicalElement<Element>
+    public struct Element : IMathematicalElement<Element>
     {
         public double Coefficient { get; set; }
         public int Exponent { get; set; }

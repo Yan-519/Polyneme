@@ -1,22 +1,26 @@
-﻿namespace Polyneme
+﻿using static Polynomial.DeterministicPoint;
+
+namespace Polynomial
 {
-    public struct DeterministicPoint
+    public struct DeterministicPoint(DeterministicPointType type, double x, double y)
     {
         public enum DeterministicPointType
         {
+            None,
             Maximal,
             Minimal
         }
 
-        public DeterministicPointType Type { get; private set; }
-        public double X { get; private set; }
-        public double Y { get; private set; }
+        public DeterministicPointType Type { get; private set; } = type;
+        public double X { get; private set; } = x;
+        public double Y { get; private set; } = y;
 
-        public DeterministicPoint(DeterministicPointType type, double x, double y)
+        public DeterministicPoint(double x, double y, double secondDerivativeValue)
+            : this(DeterministicPointType.None, x, y)
         {
-            Type = type;
-            X = x;
-            Y = y;
+            if (secondDerivativeValue == 0) return;
+
+            Type = 0 < secondDerivativeValue ? DeterministicPointType.Minimal : DeterministicPointType.Maximal;
         }
 
         public override string ToString()

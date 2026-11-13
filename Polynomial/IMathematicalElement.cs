@@ -1,6 +1,6 @@
-﻿namespace Polyneme
+﻿namespace Polynomial
 {
-    public interface MathematicalElement<T>
+    public interface IMathematicalElement<T>
     {
         double Evaluate(double x);
 
