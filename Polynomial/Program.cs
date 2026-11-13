@@ -2,7 +2,7 @@
 using Polyneme;
 
 
-Poly poly = new Poly([
+PolyEquasion poly = new PolyEquasion([
 
     new(-1,5),
     new(4,4),

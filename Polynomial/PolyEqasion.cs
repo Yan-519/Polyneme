@@ -1,13 +1,13 @@
 ﻿namespace Polyneme
 {
-    public struct Poly() : MathematicalElement<Poly>
+    public struct PolyEquasion() : MathematicalElement<PolyEquasion>
     {
         private const double EPSILON = 1e-5;
         private const int MAX_RESERCH_DISTANCE = 1000;
 
         private readonly List<Element> elements = [];
 
-        public Poly(List<Element> elements) : this()
+        public PolyEquasion(List<Element> elements) : this()
         {
             this.elements = elements;
         }
@@ -23,7 +23,7 @@
         }
 
 
-        public Poly Derivative()
+        public PolyEquasion Derivative()
         {
             List<Element> derivativeElements = new List<Element>();
             foreach (var element in elements)
@@ -32,7 +32,7 @@
                 if (derivativeElement.Coefficient != 0)
                     derivativeElements.Add(derivativeElement);
             }
-            return new Poly(derivativeElements);
+            return new PolyEquasion(derivativeElements);
         }
 
 
@@ -68,8 +68,8 @@
         {
             List<DeterministicPoint> points = new List<DeterministicPoint>();
 
-            Poly derivativePoly = Derivative();
-            Poly secondDerivativePoly = derivativePoly.Derivative();
+            PolyEquasion derivativePoly = Derivative();
+            PolyEquasion secondDerivativePoly = derivativePoly.Derivative();
 
             List<double> criticalPoints = derivativePoly.Sol();
 
