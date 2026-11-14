@@ -3,10 +3,11 @@
     public struct PolyEquation() : IMathematicalElement<PolyEquation>
     {
         private const double EPSILON = 1e-5;
-        private const int MAX_RESEARCH_DISTANCE = 1000;
+        private const int MAX_RESEARCH_DISTANCE = sizeof(int) * 8 - 1;
 
         private readonly List<Element> elements = [];
 
+        // O(n)
         public PolyEquation(List<Element> elements) : this()
         {
             Dictionary<int, double> exponentToCoefficient = new();
@@ -26,6 +27,7 @@
                 .ToList();
         }
 
+        // O(n) nothing can be done
         public double Evaluate(double x)
         {
             double result = 0;
@@ -36,7 +38,7 @@
             return result;
         }
 
-
+        // O(n) nothing can be done
         public PolyEquation Derivative()
         {
             List<Element> derivativeElements = [];
@@ -49,7 +51,7 @@
             return new PolyEquation(derivativeElements);
         }
 
-
+        // O(1)
         private HashSet<double> SolSimple(int degree)
         {
             if (2 < degree)
@@ -78,6 +80,7 @@
             return [];
         }
 
+        // No change
         private List<DeterministicPoint> GetDeterministicPoints()
         {
             List<DeterministicPoint> points = [];
@@ -93,6 +96,7 @@
             return points;
         }
 
+        // O(n log(n)) nothing can be done
         private double FindRootBisection(double x1, double x2, bool isGoingUp)
         {
             double middleVal = Evaluate((x1 + x2) / 2);
@@ -116,6 +120,7 @@
             }
         }
 
+        // O(n) nothing can be done
         private double FindRootInDetraction(double x, bool isLeft)
         {
             int sign = isLeft ? -1 : 1;
@@ -123,9 +128,9 @@
 
             double beforeZero = x;
             double afterZero = x;
-            for (int i = 0; i < MAX_RESEARCH_DISTANCE; i++)
+            for (int i = 0, step = 1; i < MAX_RESEARCH_DISTANCE; i++, step <<= 1)
             {
-                double currentX = x + sign * (i + 1);
+                double currentX = x + sign * step;
 
                 if (Evaluate(currentX) * y < 0)
                 {
@@ -145,6 +150,7 @@
             return FindRootBisection(start, end, Evaluate(start) < Evaluate(end));
         }
 
+        // O(n) nothing can be done
         private PolyEquation Normalize(int minExponent)
         {
             List<Element> newElements = [];
@@ -154,6 +160,7 @@
             return new PolyEquation(newElements);
         }
 
+        // No change possible
         public HashSet<double> Sol()
         {
             int degree = elements.Max(e => e.Exponent);
@@ -170,25 +177,24 @@
             }
 
 
-            HashSet<double> results = [];
-
             PolyEquation derivativePoly = Derivative();
 
             List<DeterministicPoint> deterministicPoints = GetDeterministicPoints().OrderBy(p => p.X).ToList();
 
             if (deterministicPoints.Count == 0)
             {
-                if (Evaluate(0) == 0)
-                    results.Add(0);
-                else if (0 < Evaluate(0))
-                        results.Add(FindRootInDetraction(0, 0 < derivativePoly.Evaluate(0)));
-                
-                else
-                    results.Add(FindRootInDetraction(0, 0 > derivativePoly.Evaluate(0)));
+                if (Evaluate(0) == 0) return [0];
 
-                return results;
+                else if (0 < Evaluate(0))
+                        return [FindRootInDetraction(0, 0 < derivativePoly.Evaluate(0))];
+                
+                else return [FindRootInDetraction(0, 0 > derivativePoly.Evaluate(0))];
             }
 
+
+            HashSet<double> results = [];
+
+            results.UnionWith(deterministicPoints.Where(p => p.Y == 0).Select(p => p.X));
 
             DeterministicPoint first = deterministicPoints.First();
 
@@ -200,27 +206,10 @@
             }
 
             for (int i = 0; i < deterministicPoints.Count - 1; i++)
-            {
-                double x1 = deterministicPoints[i].X;
-                double x2 = deterministicPoints[i + 1].X;
-                double y1 = deterministicPoints[i].Y;
-                double y2 = deterministicPoints[i + 1].Y;
-
-                if (0 < y1 * y2) continue;
-
-                else if (y1 == 0)
-                {
-                    results.Add(x1);
-                    continue;
-                }
-
-                results.Add(FindRootBisection(x1, x2, y1 < y2));
-            }
-
+                if (deterministicPoints[i].Y * deterministicPoints[i + 1].Y < 0)
+                    results.Add(FindRootBisection(deterministicPoints[i].X, deterministicPoints[i + 1].X, deterministicPoints[i].Y < deterministicPoints[i + 1].Y));
+            
             DeterministicPoint last = deterministicPoints.Last();
-
-            if (last.Y == 0)
-                results.Add(last.X);
 
             if (derivativePoly.Evaluate(last.X + 0.1) * last.Y < 0)
             {
@@ -232,10 +221,10 @@
             return results;
         }
 
-
+        // No change possible
         public override string ToString()
         {
-            return string.Join(" + ", elements.OrderBy(e => e.Exponent).Reverse());
+            return string.Join(" + ", elements.OrderByDescending(e => e.Exponent));
         }
     }
 }
