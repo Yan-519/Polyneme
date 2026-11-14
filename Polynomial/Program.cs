@@ -1,15 +1,19 @@
 ﻿using Polynomial;
 
-PolyEquation poly = new([
+PolyEquation poly = new(
+    new(1,7),
+    new(-58,3),
+    new(10,1),
+    new(-9),
+    new(15,-3)
+    );
 
-    new(-1,5),
-    new(-55, 9),
-    new(4,4),
-    new(-1,2),
-    new(9)
+Console.WriteLine(poly);
 
-    ]);
+poly += new PolynomialElement(5, 3);
+Console.WriteLine(poly);
 
+poly -= new PolyEquation(new PolynomialElement(2, 1), new PolynomialElement(-3));
 Console.WriteLine(poly);
 
 HashSet<double> roots = poly.Sol();

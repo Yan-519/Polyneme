@@ -1,16 +1,18 @@
-﻿namespace Polynomial
+﻿using System.Numerics;
+
+namespace Polynomial
 {
-    public struct PolyEquation() : IMathematicalElement<PolyEquation>
+    public struct PolyEquation : IMathematicalElement<PolyEquation>, IAdditionOperators<PolyEquation, PolynomialElement, PolyEquation>, ISubtractionOperators<PolyEquation, PolynomialElement, PolyEquation>
     {
         private const double EPSILON = 1e-5;
         private const int MAX_RESEARCH_DISTANCE = sizeof(int) * 8 - 1;
 
-        private readonly List<Element> elements = [];
+        private readonly List<PolynomialElement> elements = [];
 
         // O(n)
-        public PolyEquation(List<Element> elements) : this()
+        public PolyEquation(List<PolynomialElement> elements) : this()
         {
-            Dictionary<int, double> exponentToCoefficient = new();
+            Dictionary<int, double> exponentToCoefficient = [];
 
             foreach (var element in elements)
             {
@@ -22,10 +24,13 @@
 
             this.elements = exponentToCoefficient
                 .Where(kvp => kvp.Value != 0)
-                .Select(kvp => new Element(kvp.Value, kvp.Key))
+                .Select(kvp => new PolynomialElement(kvp.Value, kvp.Key))
                 .OrderByDescending(e => e.Exponent)
                 .ToList();
         }
+
+        public PolyEquation(params PolynomialElement[] elements) : this(elements.ToList())
+        { }
 
         // O(n) nothing can be done
         public double Evaluate(double x)
@@ -41,10 +46,10 @@
         // O(n) nothing can be done
         public PolyEquation Derivative()
         {
-            List<Element> derivativeElements = [];
+            List<PolynomialElement> derivativeElements = [];
             foreach (var element in elements)
             {
-                Element derivativeElement = element.Derivative();
+                PolynomialElement derivativeElement = element.Derivative();
                 if (derivativeElement.Coefficient != 0)
                     derivativeElements.Add(derivativeElement);
             }
@@ -91,8 +96,16 @@
             HashSet<double> criticalPoints = derivativePoly.Sol();
 
             foreach (double x in criticalPoints)
-                points.Add(new DeterministicPoint(x, Evaluate(x), secondDerivativePoly.Evaluate(x)));
-            
+            {
+                DeterministicPointType type = secondDerivativePoly.Evaluate(x) switch
+                {
+                    > 0 => DeterministicPointType.Minimal,
+                    < 0 => DeterministicPointType.Maximal,
+                    _ => DeterministicPointType.None
+                };
+                points.Add(new DeterministicPoint(type, x, Evaluate(x)));
+            }
+
             return points;
         }
 
@@ -141,7 +154,7 @@
                 beforeZero = currentX;
             }
 
-            if(afterZero == x) return double.NaN;
+            if (afterZero == x) return double.NaN;
 
 
             double start = Math.Min(beforeZero, afterZero);
@@ -153,9 +166,9 @@
         // O(n) nothing can be done
         private PolyEquation Normalize(int minExponent)
         {
-            List<Element> newElements = [];
+            List<PolynomialElement> newElements = [];
             foreach (var element in elements)
-                newElements.Add(new Element(element.Coefficient, element.Exponent - minExponent));
+                newElements.Add(new PolynomialElement(element.Coefficient, element.Exponent - minExponent));
 
             return new PolyEquation(newElements);
         }
@@ -163,12 +176,19 @@
         // No change possible
         public HashSet<double> Sol()
         {
+            int minExponent = elements.Min(e => e.Exponent);
+            if (minExponent < 0)
+            {
+                HashSet<double> normalizedRoots = Normalize(minExponent).Sol();
+                normalizedRoots.Remove(0);
+                return normalizedRoots;
+            }
+
             int degree = elements.Max(e => e.Exponent);
             if (degree <= 2)
                 return SolSimple(degree);
 
 
-            int minExponent = elements.Min(e => e.Exponent);
             if (0 < minExponent)
             {
                 HashSet<double> normalizedRoots = Normalize(minExponent).Sol();
@@ -186,8 +206,8 @@
                 if (Evaluate(0) == 0) return [0];
 
                 else if (0 < Evaluate(0))
-                        return [FindRootInDetraction(0, 0 < derivativePoly.Evaluate(0))];
-                
+                    return [FindRootInDetraction(0, 0 < derivativePoly.Evaluate(0))];
+
                 else return [FindRootInDetraction(0, 0 > derivativePoly.Evaluate(0))];
             }
 
@@ -208,7 +228,7 @@
             for (int i = 0; i < deterministicPoints.Count - 1; i++)
                 if (deterministicPoints[i].Y * deterministicPoints[i + 1].Y < 0)
                     results.Add(FindRootBisection(deterministicPoints[i].X, deterministicPoints[i + 1].X, deterministicPoints[i].Y < deterministicPoints[i + 1].Y));
-            
+
             DeterministicPoint last = deterministicPoints.Last();
 
             if (derivativePoly.Evaluate(last.X + 0.1) * last.Y < 0)
@@ -225,6 +245,47 @@
         public override string ToString()
         {
             return string.Join(" + ", elements.OrderByDescending(e => e.Exponent));
+        }
+
+        public static PolyEquation operator +(PolyEquation left, PolyEquation right)
+        {
+            List<PolynomialElement> newElements = new(left.elements);
+            newElements.AddRange(right.elements);
+            return new PolyEquation(newElements);
+        }
+
+        public static PolyEquation operator -(PolyEquation left, PolyEquation right)
+        {
+            List<PolynomialElement> newElements = new(left.elements);
+            newElements.AddRange(right.elements.Select(e => new PolynomialElement(-e.Coefficient, e.Exponent)));
+            return new PolyEquation(newElements);
+        }
+
+
+        public static PolyEquation operator *(PolyEquation left, double right)
+        {
+            List<PolynomialElement> newElements = left.elements.Select(e => new PolynomialElement(e.Coefficient * right, e.Exponent)).ToList();
+            return new PolyEquation(newElements);
+        }
+
+        public static PolyEquation operator /(PolyEquation left, double right)
+        {
+            List<PolynomialElement> newElements = left.elements.Select(e => new PolynomialElement(e.Coefficient / right, e.Exponent)).ToList();
+            return new PolyEquation(newElements);
+        }
+
+
+        public static PolyEquation operator +(PolyEquation left, PolynomialElement right)
+        {
+            List<PolynomialElement> newElements = new(left.elements);
+            newElements.Add(right);
+            return new PolyEquation(newElements);
+        }
+        public static PolyEquation operator -(PolyEquation left, PolynomialElement right)
+        {
+            List<PolynomialElement> newElements = new(left.elements);
+            newElements.Add(new PolynomialElement(-right.Coefficient, right.Exponent));
+            return new PolyEquation(newElements);
         }
     }
 }
