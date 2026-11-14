@@ -37,9 +37,8 @@ namespace Polynomial
         {
             double result = 0;
             foreach (var element in elements)
-            {
                 result += element.Coefficient * Math.Pow(x, element.Exponent);
-            }
+            
             return result;
         }
 
@@ -188,7 +187,6 @@ namespace Polynomial
             if (degree <= 2)
                 return SolSimple(degree);
 
-
             if (0 < minExponent)
             {
                 HashSet<double> normalizedRoots = Normalize(minExponent).Sol();
@@ -281,6 +279,7 @@ namespace Polynomial
             newElements.Add(right);
             return new PolyEquation(newElements);
         }
+
         public static PolyEquation operator -(PolyEquation left, PolynomialElement right)
         {
             List<PolynomialElement> newElements = new(left.elements);
