@@ -8,7 +8,7 @@ PolynomialElement LatexConvertorElement(string latex)
     int idxX = latex.IndexOf('x');
 
     return new PolynomialElement(
-        int.Parse(latex.Substring(0, idxX)),
+        0 < idxX ? int.Parse(latex.Substring(0, idxX)) : 1,
         latex.Contains('^') ? int.Parse(latex.Substring(idxX + 3, latex.Length - idxX - 4)) : 1
     );
 }
@@ -36,7 +36,7 @@ PolyEquation LatexConvertor(string latex)
 }
 
 
-string latex = "-6x^{8}+8x^{-3}+55-7x^{2}";
+string latex = "x^{3}+2x";
 
 PolyEquation poly = LatexConvertor(latex);
     //new(
@@ -48,6 +48,10 @@ PolyEquation poly = LatexConvertor(latex);
     //);
 
 Console.WriteLine(latex + " = " + poly);
+
+Console.WriteLine(poly.FindRootNewton(0));
+
+return;
 
 HashSet<double> roots = poly.Sol();
 

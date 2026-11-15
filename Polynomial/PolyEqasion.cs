@@ -2,7 +2,9 @@
 
 namespace Polynomial
 {
-    public struct PolyEquation : IMathematicalElement<PolyEquation>, IAdditionOperators<PolyEquation, PolynomialElement, PolyEquation>, ISubtractionOperators<PolyEquation, PolynomialElement, PolyEquation>
+    public struct PolyEquation : IMathematicalElement<PolyEquation>, 
+        IAdditionOperators<PolyEquation, PolynomialElement, PolyEquation>, ISubtractionOperators<PolyEquation, PolynomialElement, PolyEquation>,
+        IMultiplyOperators<PolyEquation, PolynomialElement, PolyEquation>, IDivisionOperators<PolyEquation, PolynomialElement, PolyEquation>
     {
         private const double EPSILON = 1e-5;
         private const int MAX_RESEARCH_DISTANCE = sizeof(int) * 8 - 1;
@@ -172,6 +174,25 @@ namespace Polynomial
             return new PolyEquation(newElements);
         }
 
+        // O(n) nothing can be done
+        public double FindRootNewton(double guess)
+        {
+            PolyEquation derivative = Derivative();
+            double currentX = guess;
+
+            for (int i = 0; i < 50; i++)
+            {
+                double y = Evaluate(currentX);
+                if (Math.Abs(y) < EPSILON) return currentX;
+
+                double dy = derivative.Evaluate(currentX);
+                if (dy == 0) break; // Should not happen for strictly monotonic functions
+
+                currentX = currentX - (y / dy);
+            }
+            return currentX;
+        }
+
         // No change possible
         public HashSet<double> Sol()
         {
@@ -200,14 +221,7 @@ namespace Polynomial
             List<DeterministicPoint> deterministicPoints = GetDeterministicPoints().OrderBy(p => p.X).ToList();
 
             if (deterministicPoints.Count == 0)
-            {
-                if (Evaluate(0) == 0) return [0];
-
-                else if (0 < Evaluate(0))
-                    return [FindRootInDetraction(0, 0 < derivativePoly.Evaluate(0))];
-
-                else return [FindRootInDetraction(0, 0 > derivativePoly.Evaluate(0))];
-            }
+                return [FindRootNewton(0)];
 
 
             HashSet<double> results = [];
@@ -285,6 +299,34 @@ namespace Polynomial
             List<PolynomialElement> newElements = new(left.elements);
             newElements.Add(new PolynomialElement(-right.Coefficient, right.Exponent));
             return new PolyEquation(newElements);
+        }
+
+
+        public static PolyEquation operator *(PolyEquation left, PolynomialElement right)
+        {
+            return (left * right.Coefficient).Normalize(right.Exponent);
+        }
+
+        public static PolyEquation operator /(PolyEquation left, PolynomialElement right)
+        {
+            return (left * right.Coefficient).Normalize(right.Exponent);
+        }
+
+
+        public static PolyEquation operator *(PolyEquation left, PolyEquation right)
+        {
+            PolyEquation result = new(left.elements);
+            foreach (var element in right.elements)
+                result *= element;
+            return result;
+        }
+
+        public static PolyEquation operator /(PolyEquation left, PolyEquation right)
+        {
+            PolyEquation result = new(left.elements);
+            foreach (var element in right.elements)
+                result /= element;
+            return result;
         }
     }
 }

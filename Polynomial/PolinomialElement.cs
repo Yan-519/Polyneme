@@ -2,7 +2,8 @@
 
 namespace Polynomial
 {
-    public struct PolynomialElement(double coefficient, int exponent) : IMathematicalElement<PolynomialElement>
+    public struct PolynomialElement(double coefficient, int exponent) : IMathematicalElement<PolynomialElement>,
+        IMultiplyOperators<PolynomialElement, PolynomialElement, PolynomialElement>, IDivisionOperators<PolynomialElement, PolynomialElement, PolynomialElement>
     {
         public double Coefficient = coefficient;
         public int Exponent = exponent;
@@ -62,6 +63,16 @@ namespace Polynomial
         public static PolynomialElement operator /(PolynomialElement left, double right)
         {
             return new PolynomialElement(left.Coefficient / right, left.Exponent);
+        }
+
+        public static PolynomialElement operator *(PolynomialElement left, PolynomialElement right)
+        {
+            return new PolynomialElement(left.Coefficient * right.Coefficient, left.Exponent + right.Exponent);
+        }
+
+        public static PolynomialElement operator /(PolynomialElement left, PolynomialElement right)
+        {
+            return new PolynomialElement(left.Coefficient / right.Coefficient, left.Exponent - right.Exponent);
         }
     }
 }
