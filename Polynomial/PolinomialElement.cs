@@ -11,12 +11,12 @@ namespace Polynomial
         public PolynomialElement(double coefficient) : this(coefficient, 0)
         { }
 
-        public double Evaluate(double x)
+        public readonly double Evaluate(double x)
         {
             return Coefficient * Math.Pow(x, Exponent);
         }
 
-        public PolynomialElement Derivative()
+        public readonly PolynomialElement Derivative()
         {
             if (Exponent == 0)
                 return new PolynomialElement(0, 0);
@@ -24,7 +24,7 @@ namespace Polynomial
                 return new PolynomialElement(Coefficient * Exponent, Exponent - 1);
         }
 
-        public override string ToString()
+        public readonly override string ToString()
         {
             if (Coefficient == 0)
                 return "0";

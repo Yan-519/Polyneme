@@ -2,7 +2,7 @@
 
 namespace Polynomial
 {
-    public struct PolyEquation : IMathematicalElement<PolyEquation>, 
+    public struct PolyEquation : IMathematicalElement<PolyEquation>,
         IAdditionOperators<PolyEquation, PolynomialElement, PolyEquation>, ISubtractionOperators<PolyEquation, PolynomialElement, PolyEquation>,
         IMultiplyOperators<PolyEquation, PolynomialElement, PolyEquation>, IDivisionOperators<PolyEquation, PolynomialElement, PolyEquation>
     {
@@ -35,17 +35,17 @@ namespace Polynomial
         { }
 
         // O(n) nothing can be done
-        public double Evaluate(double x)
+        public readonly double Evaluate(double x)
         {
             double result = 0;
             foreach (var element in elements)
                 result += element.Coefficient * Math.Pow(x, element.Exponent);
-            
+
             return result;
         }
 
         // O(n) nothing can be done
-        public PolyEquation Derivative()
+        public readonly PolyEquation Derivative()
         {
             List<PolynomialElement> derivativeElements = [];
             foreach (var element in elements)
@@ -58,7 +58,7 @@ namespace Polynomial
         }
 
         // O(1)
-        private HashSet<double> SolSimple(int degree)
+        private readonly HashSet<double> SolSimple(int degree)
         {
             if (2 < degree)
                 throw new ArgumentException("Degree must be 2 or less for this method.");
@@ -87,7 +87,7 @@ namespace Polynomial
         }
 
         // No change
-        private List<DeterministicPoint> GetDeterministicPoints()
+        public readonly List<DeterministicPoint> GetDeterministicPoints()
         {
             List<DeterministicPoint> points = [];
 
@@ -111,7 +111,7 @@ namespace Polynomial
         }
 
         // O(n log(n)) nothing can be done
-        private double FindRootBisection(double x1, double x2, bool isGoingUp)
+        private readonly double FindRootBisection(double x1, double x2, bool isGoingUp)
         {
             double middleVal = Evaluate((x1 + x2) / 2);
 
@@ -135,7 +135,7 @@ namespace Polynomial
         }
 
         // O(n) nothing can be done
-        private double FindRootInDetraction(double x, bool isLeft)
+        private readonly double FindRootInDetraction(double x, bool isLeft)
         {
             int sign = isLeft ? -1 : 1;
             double y = Evaluate(x);
@@ -165,17 +165,17 @@ namespace Polynomial
         }
 
         // O(n) nothing can be done
-        private PolyEquation Normalize(int minExponent)
+        public PolyEquation Normalize(int minExponent)
         {
             List<PolynomialElement> newElements = [];
             foreach (var element in elements)
-                newElements.Add(new PolynomialElement(element.Coefficient, element.Exponent - minExponent));
+                newElements.Add(element with { Exponent = element.Exponent - minExponent });
 
             return new PolyEquation(newElements);
         }
 
         // O(n) nothing can be done
-        public double FindRootNewton(double guess)
+        private readonly double FindRootNewton(double guess)
         {
             PolyEquation derivative = Derivative();
             double currentX = guess;
@@ -186,9 +186,9 @@ namespace Polynomial
                 if (Math.Abs(y) < EPSILON) return currentX;
 
                 double dy = derivative.Evaluate(currentX);
-                if (dy == 0) break; // Should not happen for strictly monotonic functions
+                if (dy == 0) break;
 
-                currentX = currentX - (y / dy);
+                currentX -= y / dy;
             }
             return currentX;
         }
@@ -214,6 +214,7 @@ namespace Polynomial
                 normalizedRoots.Add(0);
                 return normalizedRoots;
             }
+
 
 
             PolyEquation derivativePoly = Derivative();
@@ -254,50 +255,50 @@ namespace Polynomial
         }
 
         // No change possible
-        public override string ToString()
+        public readonly override string ToString()
         {
             return string.Join(" + ", elements.OrderByDescending(e => e.Exponent));
         }
 
         public static PolyEquation operator +(PolyEquation left, PolyEquation right)
         {
-            List<PolynomialElement> newElements = new(left.elements);
+            List<PolynomialElement> newElements = [.. left.elements];
             newElements.AddRange(right.elements);
             return new PolyEquation(newElements);
         }
 
         public static PolyEquation operator -(PolyEquation left, PolyEquation right)
         {
-            List<PolynomialElement> newElements = new(left.elements);
-            newElements.AddRange(right.elements.Select(e => new PolynomialElement(-e.Coefficient, e.Exponent)));
+            List<PolynomialElement> newElements = [.. left.elements];
+            newElements.AddRange(right.elements.Select(e => e with { Coefficient = -e.Coefficient, Exponent = e.Exponent }));
             return new PolyEquation(newElements);
         }
 
 
         public static PolyEquation operator *(PolyEquation left, double right)
         {
-            List<PolynomialElement> newElements = left.elements.Select(e => new PolynomialElement(e.Coefficient * right, e.Exponent)).ToList();
+            List<PolynomialElement> newElements = left.elements.Select(e => e with { Coefficient = e.Coefficient * right }).ToList();
             return new PolyEquation(newElements);
         }
 
         public static PolyEquation operator /(PolyEquation left, double right)
         {
-            List<PolynomialElement> newElements = left.elements.Select(e => new PolynomialElement(e.Coefficient / right, e.Exponent)).ToList();
+            List<PolynomialElement> newElements = left.elements.Select(e => e with { Coefficient = e.Coefficient / right }).ToList();
             return new PolyEquation(newElements);
         }
 
 
         public static PolyEquation operator +(PolyEquation left, PolynomialElement right)
         {
-            List<PolynomialElement> newElements = new(left.elements);
+            List<PolynomialElement> newElements = [.. left.elements];
             newElements.Add(right);
             return new PolyEquation(newElements);
         }
 
         public static PolyEquation operator -(PolyEquation left, PolynomialElement right)
         {
-            List<PolynomialElement> newElements = new(left.elements);
-            newElements.Add(new PolynomialElement(-right.Coefficient, right.Exponent));
+            List<PolynomialElement> newElements = [.. left.elements];
+            newElements.Add(right with { Coefficient = -right.Coefficient });
             return new PolyEquation(newElements);
         }
 

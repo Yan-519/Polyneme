@@ -9,9 +9,6 @@
 
     public readonly record struct DeterministicPoint(DeterministicPointType Type, double X, double Y)
     {
-        public readonly override string ToString()
-        {
-            return $"({X}, {Y})-{Type}";
-        }
+        public readonly override string ToString() => $"({X}, {Y})-{Type}";
     }
 }
