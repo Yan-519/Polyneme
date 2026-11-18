@@ -37,7 +37,7 @@ namespace Polynomial
             else if (Exponent == 1)
                 return $"{str}x";
             else
-                return $"{str}x^{Exponent}";
+                return $"{str}x^{{{Exponent}}}";
         }
 
         public static PolynomialElement operator +(PolynomialElement left, PolynomialElement right)
