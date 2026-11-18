@@ -1,13 +1,7 @@
 ﻿using Polynomial;
 
-static PolyEquation LatexConvertor(string latex)
-{
-    static PolynomialElement LatexConvertorElement(string latex)
-    {
-        if (!latex.Contains('x'))
-            return new PolynomialElement(int.Parse(latex));
 
-        int idxX = latex.IndexOf('x');
+string latex = "7x^{9}-59x^{2}+3+x^{-2}";
 
         return new PolynomialElement(
             0 < idxX ? int.Parse(latex.Substring(0, idxX)) : 1,
@@ -36,7 +30,7 @@ static PolyEquation LatexConvertor(string latex)
 }
 
 
-string latex = "10x-3x^{4}+13x^{-8}+x^{2}-84x^{3}";
+string latex = "x^{3}+2x";
 
 PolyEquation poly = LatexConvertor(latex);
 //new(
@@ -46,7 +40,6 @@ PolyEquation poly = LatexConvertor(latex);
 //new(-9),
 //new(15, -3)
 //);
-
 
 Console.WriteLine(latex + " = " + poly);
 
