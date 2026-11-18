@@ -36,7 +36,7 @@ static PolyEquation LatexConvertor(string latex)
 }
 
 
-string latex = "x^{3}+2x";
+string latex = "10x-3x^{4}+13x^{-8}+x^{2}-84x^{3}";
 
 PolyEquation poly = LatexConvertor(latex);
 //new(
@@ -62,3 +62,5 @@ else
     foreach (var root in roots)
         Console.WriteLine(root);
 }
+
+//while (true) Console.ReadLine();

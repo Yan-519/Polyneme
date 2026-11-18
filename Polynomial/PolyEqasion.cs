@@ -113,10 +113,19 @@ namespace Polynomial
         // O(n log(n)) nothing can be done
         private readonly double FindRootBisection(double x1, double x2, bool isGoingUp)
         {
-            double middleVal = Evaluate((x1 + x2) / 2);
+            double middleX = (x1 + x2) / 2;
+            double middleVal = Evaluate(middleX);
 
             if (Math.Abs(middleVal) < EPSILON)
-                return (x1 + x2) / 2;
+                return middleX;
+
+            if(x1 == middleX || x2 == middleX)
+            {
+                Console.WriteLine("\ndouble limit reached");
+                Console.WriteLine(this);
+                Console.WriteLine(x1 + ", " + x2 + ", " + middleVal);
+                return x1;
+            }
 
             if (isGoingUp)
             {
